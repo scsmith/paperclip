@@ -90,6 +90,26 @@ class StorageTest < Test::Unit::TestCase
       assert_match %r{^http://something.something.com/avatars/stringio.txt}, @dummy.avatar.url
     end
   end
+  
+  context "" do
+    setup do
+      AWS::S3::Base.stubs(:establish_connection!)
+      rebuild_model :storage => :s3,
+                    :s3_credentials => {
+                      :production   => { :bucket => "prod_bucket" },
+                      :development  => { :bucket => "dev_bucket" }
+                    },
+                    :s3_host_alias => Proc.new{ "something.something.com" },
+                    :path => ":attachment/:basename.:extension",
+                    :url => ":s3_alias_url"
+      @dummy = Dummy.new
+      @dummy.avatar = StringIO.new(".")
+    end
+
+    should "return a url based on the host_alias proc" do
+      assert_match %r{^http://something.something.com/avatars/stringio.txt}, @dummy.avatar.url
+    end
+  end
 
   context "Generating a url with an expiration" do
     setup do
